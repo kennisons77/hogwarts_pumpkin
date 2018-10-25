@@ -20,10 +20,16 @@
 CRGB leds[NUM_LEDS];
 
 // Game state
-int p1Score;
-int p2Score;
-int p1Hue = 0;    // red (starts at "data in" end of LED strip)
-int p2Hue = 160;  // blue (starts at "data out" end of LED strip)
+int cScore;
+int hScore;
+int cIndex;
+int hIndex;
+int cSpell;
+int hSpell;
+int hEnteredAt;
+int fireHue = 0;    // red (starts at "data in" end of LED strip)
+int waterHue = 160;  // blue (starts at "data out" end of LED strip)
+int airHue = 320;  // #TODO change this to actuval value for white (starts at "data out" end of LED strip)
 bool gameOver;
 
 void setup() {
@@ -37,10 +43,11 @@ void setup() {
 }
 
 void loop() {
-  if (gameOver) {
+  if (cIndex == NUM_LEDS || hIndex == 0))
+  {
     displayWinner();
-  } else if (p1Score >= NUM_LEDS / 2 || p2Score >= NUM_LEDS / 2) {
-    gameOver = true;
+  } else if (cIndex + 1 == hIndex - 1) {
+    resolveSpells();
   } else {
     displayScore();
   }
@@ -50,44 +57,76 @@ void loop() {
 void serialEvent() {
   while (Serial.available()) {
     char ch = Serial.read();
-    if (ch == 'R') {
-      p1Score++;
-    } else if (ch == 'B') {
-      p2Score++;
+    if (ch == 'f') {
+      hSpell = "fire";
+    } else if (ch == 'w') {
+      hSpell = "water";
+    } else if (ch == 'a') {
+      hSpell = "air";
     }
   }
 }
 
 void displayScore() {
   for (int i = 0; i < NUM_LEDS; i++) {
-    if (i <= p1Score) {
-      leds[i] = CHSV(p1Hue, 255, 192);
-    } else if (i >= NUM_LEDS - p2Score - 1) {
-      leds[i] = CHSV(p2Hue, 255, 192);
+    if (hSpell){
+      hEnteredAt = i;
+    }
+    if (cIndex)
+    {
+      cIndex = i;
+      leds[cIndex] = CHSV(getHue(cSpell), 255, 192);
+    }
+    if (hIndex) {
+      hIndex = NUM_LEDS - hEnteredAt - i;
+      leds[hIndex] = CHSV(getHue(hSpell), 255, 192);
     }
   }
   FastLED.show();
   delay(500);
 
-  // Blink the players' next available LED
-  if (p1Score < NUM_LEDS) {
-    leds[p1Score] = CRGB::Black;
+  // Blink the players' last LED
+  if (cIndex > 0) {
+    leds[cIndex - 1] = CRGB::Black;
   }
-  if (p2Score < NUM_LEDS) {
-    leds[NUM_LEDS - p2Score - 1] = CRGB::Black;
+  if (hIndex < NUM_LEDS)
+  {
+    leds[hIndex + 1] = CRGB::Black;
   }
   FastLED.show();
   delay(500);
+}
+
+string getHue(spell string){
+  if spell == "fire" {
+    return fireHue;
+  }
+  if spell == "water" {
+    return waterHue;
+  }
+  if spell == "air" {
+    return airHue;
+  }
 }
 
 void displayWinner() {
   // "sinelon" pattern - a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy(leds, NUM_LEDS, 20);
   int pos = beatsin16(13, 0, NUM_LEDS-1 );
-  if (p1Score >= p2Score) {
-    leds[pos] += CHSV(p1Hue, 255, 192);
-  } else {
-    leds[pos] += CHSV(p2Hue, 255, 192);
+  //computer wins
+  if (hIndex == nil) {
+    leds[pos] += CHSV(getHue(cSpell), 255, 192);
+    //pumpkinWinsLights()
+    //pumpkinWinsSounds()
+  //human wins
+  }else if (cIndex == nil)  {
+    leds[pos] += CHSV(getHue(hSpell), 255, 192);
+    //pumpkinWinsLights()
+    //pumpkinWinsSounds()
+    //tie
+  }else {
+    // TODO FLASH BOTH
+   // leds[pos] += CHSV(getHue(hSpell), 255, 192);
   }
 
   // Send the 'leds' array out to the actual LED strip
@@ -96,4 +135,31 @@ void displayWinner() {
   FastLED.delay(1000/FRAMES_PER_SECOND);
 }
 
+void resolveSpells(){
+  string winner switch (expression)
+  {
 
+  case cSpell == fire && hSpell == air
+  case cSpell == water && hSpell == fire
+  case cSpell == air && hSpell == water
+    cWinDisplay()
+    hIndex = nil
+    break; /* optional */
+
+  case hSpell == fire && cSpell == air
+  case hSpell == water && cSpell == fire
+  case hSpell == air && cSpell == water
+    hWinDisplay()
+    cIndex = nil
+    break; /* optional */
+
+  // if it's a tie, dispaly the tie animation and set both indexes to their end, setting off the tie game end
+  default: /* Optional */
+    tieDisplay()
+        cIndex = NUM_LEDS
+  }
+}
+
+void cWinDisplay(){
+  
+}
